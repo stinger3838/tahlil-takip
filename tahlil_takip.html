@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kişisel Tahlil Takip Tablosu</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --text-color: #333;
+            --date-bg-color: #e74c3c;
+            
+            /* Durum Renkleri (Hafif Şeffaf Tonlar) */
+            --normal-bg: #e8f8f5;
+            --normal-text: #27ae60;
+            --high-bg: #fdebd0;
+            --high-text: #e67e22;
+            --very-high-bg: #fadbd8;
+            --very-high-text: #c0392b;
+            --low-bg: #ebf5fb;
+            --low-text: #2980b9;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 98%;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .form-container {
+            background: #fdfdfd;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #555;
+        }
+        input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            grid-column: 1 / -1;
+            padding: 12px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #219653; }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 2200px;
+        }
+        th, td {
+            padding: 12px 8px;
+            text-align: center;
+            border-right: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        td.editable {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+        .date-col {
+            background-color: var(--date-bg-color) !important;
+            color: white !important;
+            font-weight: bold !important;
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            border-right: 2px solid #c0392b;
+        }
+        th.date-col {
+            z-index: 3;
+            background-color: var(--date-bg-color) !important;
+        }
+        .edit-info {
+            background-color: #e8f4f8;
+            color: #2980b9;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        /* Renklendirme Sınıfları */
+        .t-normal { background-color: var(--normal-bg) !important; color: var(--normal-text) !important; }
+        .t-low { background-color: var(--low-bg) !important; color: var(--low-text) !important; }
+        .t-high { background-color: var(--high-bg) !important; color: var(--high-text) !important; }
+        .t-veryhigh { background-color: var(--very-high-bg) !important; color: var(--very-high-text) !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🩸 Kişisel Tahlil Takip Tablosu</h1>
+    <p style="color: #7f8c8d; font-size: 0.9rem;">Sonuçlarınız laboratuvar referans aralıklarına göre otomatik renklenir.</p>
+    
+    <div class="form-container">
+        <h2>➕ Yeni Dönem Sonuçlarını Girin</h2>
+        <form id="tahlilForm">
+            <div style="margin-bottom: 15px; max-width: 200px;" class="form-group">
+                <label for="tahlilTarihi">Tahlil Tarihi</label>
+                <input type="date" id="tahlilTarihi" required>
+            </div>
+            <div class="form-grid" id="inputGrid"></div>
+            <button type="submit">Sonuçları Kaydet</button>
+        </form>
+    </div>
+
+    <h2>📊 Tüm Dönemlerin Karşılaştırmalı Tablosu</h2>
+    <div class="edit-info">💡 İpucu: Hücreye çift tıklayarak veriyi doğrudan değiştirebilirsiniz. Mavi: Düşük | Yeşil: Normal | Kırmızı: Yüksek</div>
+    
+    <div class="table-responsive">
+        <table id="tahlilTablosu">
+            <thead>
+                <tr id="tabloBasliklari">
+                    <th class="date-col">Tarih</th>
+                </tr>
+            </thead>
+            <tbody id="tahlilListesi"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- JavaScript dosyamızı burada bağlıyoruz -->
+<script src="script.js"></script>
+
+</body>
+</html>
