@@ -7,9 +7,9 @@ app.use(express.json());
 
 // --- BURALARI KENDİ BİLGİLERİNİZLE DOLDURUN ---
 const GIZLI_SIFRE = "123456"; 
-const GITHUB_USERNAME = "GITHUB_KULLANICI_ADINIZ"; // <-- Buraya kendi kullanıcı adınızı yazın
+const GITHUB_USERNAME = "stinger3838"; // <-- Buraya kendi kullanıcı adınızı yazın
 const GITHUB_REPO = "tahlil-takip";               // <-- Buraya repo adınızı yazın
-const GITHUB_TOKEN = "TOKENINIZ";                  // <-- Buraya ghp_ ile başlayan tokenınızı yazın
+const GITHUB_TOKEN = "process.env.GITHUB_TOKEN";                  // <-- Buraya ghp_ ile başlayan tokenınızı yazın
 // ----------------------------------------------
 
 const authMiddleware = (req, res, next) => {
