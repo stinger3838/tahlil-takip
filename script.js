@@ -15,7 +15,7 @@ const referanslar = {
     'AST': { min: 0, max: 40 },
     'ALT': { min: 0, max: 41 },
     'Protein': { min: 6.6, max: 8.7 },
-    'Alkanen Fosfataz': { min: 40, max: 130 },
+    'Alkalen Fosfataz': { min: 40, max: 130 }, // İsimlendirme düzeltildi
     'Albümin': { min: 3.5, max: 5.2 },
     'Fosfor': { min: 2.5, max: 4.5 },
     'LDH': { min: 135, max: 225 },
@@ -31,7 +31,7 @@ const tahlilListesi = Object.keys(referanslar);
 const inputGrid = document.getElementById('inputGrid');
 const tabloBasliklari = document.getElementById('tabloBasliklari');
 
-// Form ve başlık yapısı oluşturma
+// Form ve başlık yapısını DOM'a ilk yüklemede oluşturma
 tahlilListesi.forEach(tahlil => {
     const ref = referanslar[tahlil];
     const div = document.createElement('div');
@@ -47,19 +47,43 @@ tahlilListesi.forEach(tahlil => {
     tabloBasliklari.appendChild(th);
 });
 
-// Şifre sorma mekanizması
+// Şifre sorma mekanizması (UX İyileştirmesi)
 function sifreSor() {
     if(!userPassword) {
-        userPassword = prompt("Lütfen erişim şifrenizi giriniz:");
-        if(userPassword) localStorage.setItem('tahlil_app_password', userPassword);
+        const input = prompt("Lütfen erişim şifrenizi giriniz:");
+        if(input && input.trim() !== "") {
+            userPassword = input;
+            localStorage.setItem('tahlil_app_password', userPassword);
+        } else {
+            alert("Şifre girmeden sisteme erişemezsiniz.");
+        }
     }
 }
 
-// Sunucudan Verileri Çekme (URL ve ByteString Korumalı)
+// Yardımcı Fonksiyon: Tarih Formatlama (Hoisting hatası önlendi)
+function tarihFormatla(tarihStr) {
+    if(!tarihStr) return "-";
+    const d = new Date(tarihStr);
+    return isNaN(d.getTime()) ? tarihStr : d.toLocaleDateString('tr-TR');
+}
+
+// Yardımcı Fonksiyon: Renk Sınıfı Bulma
+function renkSinifiBul(tahlilAdi, degerStr) {
+    if (!degerStr || degerStr === "-" || degerStr === "") return "";
+    const deger = parseFloat(degerStr.toString().replace(',', '.'));
+    if (isNaN(deger)) return "";
+    const ref = referanslar[tahlilAdi];
+    if (!ref) return "";
+    if (deger < ref.min) return "t-low"; 
+    if (ref.kritikMax && deger >= ref.kritikMax) return "t-veryhigh"; 
+    if (deger > ref.max) return "t-high"; 
+    return "t-normal"; 
+}
+
+// Sunucudan Verileri Çekme
 async function verileriGetir() {
     sifreSor();
     try {
-        // encodeURI kullanarak tarayıcının ByteString hatası vermesini engelliyoruz
         const response = await fetch(encodeURI('/api/tahliller'), {
             headers: { 'x-auth-password': String(userPassword) }
         });
@@ -76,9 +100,8 @@ async function verileriGetir() {
     }
 }
 
-// Sunucuya Verileri Gönderme (URL ve ByteString Korumalı)
+// Sunucuye Verileri Toplu Gönderme
 async function verileriKaydet(tumVeriler) {
-    // encodeURI ile sarmalayarak tarayıcı kilitlenmesini önlüyoruz
     const response = await fetch(encodeURI('/api/tahliller'), {
         method: 'POST',
         headers: {
@@ -94,8 +117,7 @@ async function verileriKaydet(tumVeriler) {
     }
 }
 
-
-// Form Gönderildiğinde (DÜZELTİLDİ: Akış hataya göre kesiliyor)
+// Form Gönderildiğinde Yeni Dönem Sonucu Ekleme
 document.getElementById('tahlilForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -131,7 +153,6 @@ document.getElementById('tahlilForm').addEventListener('submit', async function(
         kaydedilenler = kaydedilenler.filter(k => k.tarih !== tarih);
         kaydedilenler.push(yeniKayit);
         
-        // Burası hata verirse akış doğrudan 'catch' bloğuna atlar, sahte onay mesajı gelmez!
         await verileriKaydet(kaydedilenler);
         
         this.reset();
@@ -149,24 +170,15 @@ document.getElementById('tahlilForm').addEventListener('submit', async function(
     }
 });
 
-function renkSinifiBul(tahlilAdi, degerStr) {
-    if (!degerStr || degerStr === "-" || degerStr === "") return "";
-    const deger = parseFloat(degerStr.toString().replace(',', '.'));
-    if (isNaN(deger)) return "";
-    const ref = referanslar[tahlilAdi];
-    if (!ref) return "";
-    if (deger < ref.min) return "t-low"; 
-    if (ref.kritikMax && deger >= ref.kritikMax) return "t-veryhigh"; 
-    if (deger > ref.max) return "t-high"; 
-    return "t-normal"; 
-}
-
+// Tüm Dönemlerin Tablosunu Oluşturma ve Dinamik Hücre Düzenleme
 async function listele() {
     const tbody = document.getElementById('tahlilListesi');
     if (!tbody) return;
     tbody.innerHTML = '';
     
     const kaydedilenler = await verileriGetir();
+    if (!Array.isArray(kaydedilenler)) return;
+    
     kaydedilenler.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
 
     kaydedilenler.forEach(kayit => {
@@ -180,7 +192,7 @@ async function listele() {
         tahlilListesi.forEach(tahlil => {
             const td = document.createElement('td');
             td.className = 'editable';
-            const mevcutSonuc = (kayit.sonuclar && kayit.sonuclar[tahlil]) ? kayit.sonuclar[tahlil] : "-";
+            let mevcutSonuc = (kayit.sonuclar && kayit.sonuclar[tahlil]) ? kayit.sonuclar[tahlil] : "-";
             td.textContent = mevcutSonuc;
             
             const renkSinifi = renkSinifiBul(tahlil, mevcutSonuc);
@@ -189,13 +201,12 @@ async function listele() {
             td.addEventListener('dblclick', function() {
                 if (this.querySelector('input')) return;
                 
-                const eskiDeger = this.textContent === "-" ? "" : this.textContent;
+                // BUG FIX: Değeri her dblclick anında taze olarak kayit nesnesinden okuyoruz
+                const anlikSonuc = kayit.sonuclar[tahlil] === "-" ? "" : kayit.sonuclar[tahlil];
                 const input = document.createElement('input');
                 input.type = 'number';
                 input.step = '0.001';
-                input.value = eskiDeger;
-                input.style.width = '70px';
-                input.style.textAlign = 'center';
+                input.value = anlikSonuc;
                 
                 this.textContent = '';
                 this.appendChild(input);
@@ -205,6 +216,15 @@ async function listele() {
                     const yeniDeger = input.value.trim();
                     const temizDeger = yeniDeger !== "" ? yeniDeger : "-";
                     
+                    // Değer değişmediyse sunucuya gereksiz istek atmayı engelliyoruz
+                    if(temizDeger === kayit.sonuclar[tahlil]) {
+                        td.textContent = temizDeger;
+                        td.className = 'editable';
+                        const ayniRenk = renkSinifiBul(tahlil, temizDeger);
+                        if(ayniRenk) td.classList.add(ayniRenk);
+                        return;
+                    }
+                    
                     let guncelListe = await verileriGetir();
                     const index = guncelListe.findIndex(k => k.tarih === kayit.tarih);
                     if (index !== -1) {
@@ -212,15 +232,19 @@ async function listele() {
                         guncelListe[index].sonuclar[tahlil] = temizDeger;
                         try {
                             await verileriKaydet(guncelListe);
+                            // BUG FIX: Lokal bellek nesnesini hemen güncelliyoruz ki ardışık çift tıklamalar bozulmasın
+                            kayit.sonuclar[tahlil] = temizDeger; 
                         } catch (err) {
                             alert("Hücre güncellenirken hata oluştu: " + err.message);
+                            td.textContent = kayit.sonuclar[tahlil]; // Hata durumunda eski veriyi geri basıyoruz
+                            return;
                         }
                     }
 
-                    this.textContent = temizDeger;
-                    this.className = 'editable'; // DÜZELTİLDİ: Temel stil korundu
+                    td.textContent = temizDeger;
+                    td.className = 'editable'; 
                     const yeniRenk = renkSinifiBul(tahlil, temizDeger);
-                    if(yeniRenk) this.classList.add(yeniRenk);
+                    if(yeniRenk) td.classList.add(yeniRenk);
                 });
                 
                 input.addEventListener('keydown', (e) => {
@@ -235,11 +259,5 @@ async function listele() {
     });
 }
 
-function tarihFormatla(tarihStr) {
-    if(!tarihStr) return "-";
-    const d = new Date(tarihStr);
-    return isNaN(d.getTime()) ? tarihStr : d.toLocaleDateString('tr-TR');
-}
-
-// İlk Çalıştırma
+// Uygulamayı Başlat
 listele();
