@@ -65,6 +65,7 @@ async function verileriGetir() {
         if(response.status === 401) {
             alert("Şifre yanlış! Lütfen sayfayı yenileyip tekrar deneyin.");
             localStorage.removeItem('tahlil_app_password');
+            userPassword = "";
             return [];
         }
         return await response.json();
@@ -74,45 +75,80 @@ async function verileriGetir() {
     }
 }
 
-// Sunucuya Verileri Gönderme
+// Sunucuya Verileri Gönderme (DÜZELTİLDİ: Hata artık yukarı fırlatılıyor)
 async function verileriKaydet(tumVeriler) {
-    try {
-        await fetch('/api/tahliller', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-auth-password': userPassword
-            },
-            body: JSON.stringify(tumVeriler)
-        });
-    } catch (err) {
-        alert("Kaydedilirken hata oluştu!");
+    const response = await fetch('/api/tahliller', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-auth-password': userPassword
+        },
+        body: JSON.stringify(tumVeriler)
+    });
+    
+    if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Sunucu hata kodu döndürdü: ${response.status}`);
     }
 }
 
-// Form Gönderildiğinde
+// Form Gönderildiğinde (DÜZELTİLDİ: Akış hataya göre kesiliyor)
 document.getElementById('tahlilForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    
     const tarih = document.getElementById('tahlilTarihi').value;
-    const yeniKayit = { tarih: tarih, sonuclar: {} };
+    if (!tarih) {
+        alert("Lütfen tahlil tarihini seçiniz!");
+        return;
+    }
 
-    tahlilListesi.forEach(tahlil => {
-        const deger = document.getElementById(`t_${tahlil}`).value;
-        yeniKayit.sonuclar[tahlil] = deger !== "" ? deger : "-";
-    });
-    
-    let kaydedilenler = await verileriGetir();
-    kaydedilenler = kaydedilenler.filter(k => k.tarih !== tarih);
-    kaydedilenler.push(yeniKayit);
-    
-    await verileriKaydet(kaydedilenler);
-    this.reset();
-    listele();
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Kaydediliyor...";
+    }
+
+    try {
+        const yeniKayit = { tarih: tarih, sonuclar: {} };
+
+        tahlilListesi.forEach(tahlil => {
+            const inputElement = document.getElementById(`t_${tahlil}`);
+            const deger = inputElement ? inputElement.value.trim() : "";
+            yeniKayit.sonuclar[tahlil] = deger !== "" ? deger : "-";
+        });
+        
+        let kaydedilenler = [];
+        try {
+            kaydedilenler = await verileriGetir();
+            if (!Array.isArray(kaydedilenler)) kaydedilenler = [];
+        } catch (fetchErr) {
+            kaydedilenler = [];
+        }
+
+        kaydedilenler = kaydedilenler.filter(k => k.tarih !== tarih);
+        kaydedilenler.push(yeniKayit);
+        
+        // Burası hata verirse akış doğrudan 'catch' bloğuna atlar, sahte onay mesajı gelmez!
+        await verileriKaydet(kaydedilenler);
+        
+        this.reset();
+        alert("Tahlil sonuçları başarıyla kaydedildi!");
+        await listele();
+
+    } catch (err) {
+        console.error("Kayıt sırasında genel hata:", err);
+        alert("Kaydedilirken hata oluştu!\nDetay: " + err.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Sonuçları Kaydet";
+        }
+    }
 });
 
 function renkSinifiBul(tahlilAdi, degerStr) {
-    if (degerStr === "-" || degerStr === "") return "";
-    const deger = parseFloat(degerStr.replace(',', '.'));
+    if (!degerStr || degerStr === "-" || degerStr === "") return "";
+    const deger = parseFloat(degerStr.toString().replace(',', '.'));
     if (isNaN(deger)) return "";
     const ref = referanslar[tahlilAdi];
     if (!ref) return "";
@@ -124,9 +160,10 @@ function renkSinifiBul(tahlilAdi, degerStr) {
 
 async function listele() {
     const tbody = document.getElementById('tahlilListesi');
+    if (!tbody) return;
     tbody.innerHTML = '';
+    
     const kaydedilenler = await verileriGetir();
-
     kaydedilenler.sort((a, b) => new Date(b.tarih) - new Date(a.tarih));
 
     kaydedilenler.forEach(kayit => {
@@ -157,25 +194,29 @@ async function listele() {
                 input.style.width = '70px';
                 input.style.textAlign = 'center';
                 
-                this.className = 'editable'; 
                 this.textContent = '';
                 this.appendChild(input);
                 input.focus();
                 
                 input.addEventListener('blur', async () => {
-                    const temizDeger = input.value.trim() !== "" ? input.value : "-";
+                    const yeniDeger = input.value.trim();
+                    const temizDeger = yeniDeger !== "" ? yeniDeger : "-";
                     
                     let guncelListe = await verileriGetir();
                     const index = guncelListe.findIndex(k => k.tarih === kayit.tarih);
                     if (index !== -1) {
                         if (!guncelListe[index].sonuclar) guncelListe[index].sonuclar = {};
                         guncelListe[index].sonuclar[tahlil] = temizDeger;
-                        await verileriKaydet(guncelListe);
+                        try {
+                            await verileriKaydet(guncelListe);
+                        } catch (err) {
+                            alert("Hücre güncellenirken hata oluştu: " + err.message);
+                        }
                     }
 
                     this.textContent = temizDeger;
+                    this.className = 'editable'; // DÜZELTİLDİ: Temel stil korundu
                     const yeniRenk = renkSinifiBul(tahlil, temizDeger);
-                    this.className = 'editable';
                     if(yeniRenk) this.classList.add(yeniRenk);
                 });
                 
@@ -197,4 +238,5 @@ function tarihFormatla(tarihStr) {
     return isNaN(d.getTime()) ? tarihStr : d.toLocaleDateString('tr-TR');
 }
 
+// İlk Çalıştırma
 listele();
