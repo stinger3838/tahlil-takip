@@ -12,15 +12,15 @@
             --text-color: #333;
             --date-bg-color: #e74c3c;
             
-            /* Durum Renkleri (Hafif Şeffaf Tonlar) */
+            /* Durum Renkleri (Geliştirilmiş Kontrastlı Tonlar) */
             --normal-bg: #e8f8f5;
-            --normal-text: #27ae60;
+            --normal-text: #1e7e43;
             --high-bg: #fdebd0;
-            --high-text: #e67e22;
+            --high-text: #b76315;
             --very-high-bg: #fadbd8;
-            --very-high-text: #c0392b;
+            --very-high-text: #962d22;
             --low-bg: #ebf5fb;
-            --low-text: #2980b9;
+            --low-text: #1f618d;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -89,14 +89,15 @@
             margin-top: 20px;
             border: 1px solid #ddd;
             border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 2200px;
+            min-width: max-content; /* Sabit 2200px yerine içeriğe göre esnek yapı */
         }
         th, td {
-            padding: 12px 8px;
+            padding: 12px 14px;
             text-align: center;
             border-right: 1px solid #eee;
             border-bottom: 1px solid #eee;
@@ -105,6 +106,10 @@
         td.editable {
             cursor: pointer;
             font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        td.editable:hover {
+            background-color: #f9f9f9;
         }
         th {
             background-color: var(--primary-color);
@@ -112,6 +117,7 @@
             position: sticky;
             top: 0;
             white-space: nowrap;
+            z-index: 2;
         }
         .date-col {
             background-color: var(--date-bg-color) !important;
@@ -119,11 +125,11 @@
             font-weight: bold !important;
             position: sticky;
             left: 0;
-            z-index: 1;
+            z-index: 4;
             border-right: 2px solid #c0392b;
         }
         th.date-col {
-            z-index: 3;
+            z-index: 5;
             background-color: var(--date-bg-color) !important;
         }
         .edit-info {
@@ -135,6 +141,17 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
+        
+        /* Düzenleme Esnasında Input Kutusunun Tabloyu Bozmama Ayarı */
+        td.editable input {
+            width: 80px;
+            padding: 4px;
+            margin: 0;
+            box-sizing: border-box;
+            text-align: center;
+            border: 1px solid #2980b9;
+        }
+
         /* Renklendirme Sınıfları */
         .t-normal { background-color: var(--normal-bg) !important; color: var(--normal-text) !important; }
         .t-low { background-color: var(--low-bg) !important; color: var(--low-text) !important; }
@@ -161,7 +178,7 @@
     </div>
 
     <h2>📊 Tüm Dönemlerin Karşılaştırmalı Tablosu</h2>
-    <div class="edit-info">💡 İpucu: Hücreye çift tıklayarak veriyi doğrudan değiştirebilirsiniz. Mavi: Düşük | Yeşil: Normal | Kırmızı: Yüksek</div>
+    <div class="edit-info">💡 İpucu: Hücreye çift tıklayarak veriyi doğrudan değiştirebilirsiniz. Mavi: Düşük | Yeşil: Normal | Turuncu: Yüksek | Kırmızı: Kritik Yüksek</div>
     
     <div class="table-responsive">
         <table id="tahlilTablosu">
@@ -175,7 +192,7 @@
     </div>
 </div>
 
-<!-- JavaScript dosyamızı burada bağlıyoruz -->
+<!-- JavaScript Bağlantısı -->
 <script src="script.js"></script>
 
 </body>
