@@ -8,7 +8,7 @@ app.use(express.json());
 // --- BURALARI KENDİ BİLGİLERİNİZLE DOLDURUN ---
 const GIZLI_SIFRE = "123456"; 
 // ⚠️ KESİN ÇÖZÜM: Yeni aldığınız ghp_ ile başlayan tokenı doğrudan buraya tırnak içine yapıştırın.
-const GITHUB_TOKEN = "YENI_ALACAGINIZ_ghp_TOKENI_BURAYA_YAPISTIRIN"; 
+const GITHUB_TOKEN = "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"; 
 // ----------------------------------------------
 
 const authMiddleware = (req, res, next) => {
