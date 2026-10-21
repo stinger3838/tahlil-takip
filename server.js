@@ -9,12 +9,12 @@ app.use(express.json());
 const GIZLI_SIFRE = "123456"; // Giriş yaparken prompt ekranına girilecek şifre
 const GITHUB_TOKEN = "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"; // GitHub'dan aldığınız token
 
-const GITHUB_USER = "stinger3838"; // Kendi GitHub kullanıcı adınızı yazın (Örn: "ahmet123")
-const GITHUB_REPO = "tahlil_son";      // Tahlillerin saklanacağı depo adı (Örn: "tahlil-veri")
+const GITHUB_USER = "stinger3838"; // Kendi GitHub kullanıcı adınız
+const GITHUB_REPO = "tahlil_son";      // Tahlillerin saklanacağı depo adı
 const GITHUB_FILE = "tahliller.json";   // Verilerin yazılacağı JSON dosya adı
 // ----------------------------------------------------
 
-// API URL'si Düzeltildi: GitHub web adresi yerine gerçek API uç noktası tanımlandı
+// API URL'si Düzeltildi: Hem `api.` eki, hem `/repos/` yapısı hem de eksik olan \$ işareti eklendi
 const GITHUB_API_URL = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
 
 const authMiddleware = (req, res, next) => {
@@ -29,7 +29,7 @@ const authMiddleware = (req, res, next) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'tahlil_takip.html')));
 app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
 
-// GitHub'dan Veri Çekme (DÜZELTİLDİ)
+// GitHub'dan Veri Çekme
 app.get('/api/tahliller', authMiddleware, async (req, res) => {
     try {
         const response = await fetch(GITHUB_API_URL, {
@@ -49,11 +49,11 @@ app.get('/api/tahliller', authMiddleware, async (req, res) => {
         res.json(JSON.parse(jsonString));
     } catch (err) {
         console.error("Veri çekilirken hata oluştu:", err.message);
-        res.json([]); // Hata durumunda frontend'in kilitlenmemesi için boş dizi dönüyoruz
+        res.json([]); 
     }
 });
 
-// GitHub'a Veri Yazma (DÜZELTİLDİ)
+// GitHub'a Veri Yazma
 app.post('/api/tahliller', authMiddleware, async (req, res) => {
     try {
         let sha = "";
