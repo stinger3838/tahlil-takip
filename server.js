@@ -7,10 +7,10 @@ app.use(express.json());
 
 // --- BURALARI KENDİ GİTHUB BİLGİLERİNİZLE DOLDURUN ---
 const GIZLI_SIFRE = "123456"; // Giriş yaparken prompt ekranına girilecek şifre
-const GITHUB_TOKEN = "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"; // GitHub'dan aldığınız token
+const GITHUB_TOKEN = "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"; // GitHub'dan aldığınız token
 
 const GITHUB_USER = "stinger3838"; // Kendi GitHub kullanıcı adınız
-const GITHUB_REPO = "tahlil_son";      // Tahlillerin saklanacağı depo adı
+const GITHUB_REPO = "tahlil-takip";      // Tahlillerin saklanacağı depo adı
 const GITHUB_FILE = "tahliller.json";   // Verilerin yazılacağı JSON dosya adı
 // ----------------------------------------------------
 
