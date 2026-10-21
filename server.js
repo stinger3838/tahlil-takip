@@ -7,7 +7,8 @@ app.use(express.json());
 
 // --- BURALARI KENDİ BİLGİLERİNİZLE DOLDURUN ---
 const GIZLI_SIFRE = "123456"; 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Tırnaksız olarak Render kasasından okuyacak
+// ⚠️ KESİN ÇÖZÜM: Yeni aldığınız ghp_ ile başlayan tokenı doğrudan buraya tırnak içine yapıştırın.
+const GITHUB_TOKEN = "YENI_ALACAGINIZ_ghp_TOKENI_BURAYA_YAPISTIRIN"; 
 // ----------------------------------------------
 
 const authMiddleware = (req, res, next) => {
@@ -18,13 +19,13 @@ const authMiddleware = (req, res, next) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'tahlil_takip.html')));
 app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
 
-// GitHub'dan Veri Çekme (DÜZELTİLDİ: URL tamamen statik ve kırılmaz yapıldı)
+// GitHub'dan Veri Çekme
 app.get('/api/tahliller', authMiddleware, async (req, res) => {
     try {
         const url = "https://github.com";
         const response = await fetch(url, {
             headers: { 
-                'Authorization': `token ${GITHUB_TOKEN}`, 
+                'Authorization': `Bearer ${GITHUB_TOKEN}`, 
                 'User-Agent': 'TahlilApp',
                 'Accept': 'application/vnd.github.v3+json'
             }
@@ -40,7 +41,7 @@ app.get('/api/tahliller', authMiddleware, async (req, res) => {
     }
 });
 
-// GitHub'a Veri Yazma (DÜZELTİLDİ: URL tamamen statik ve kırılmaz yapıldı)
+// GitHub'a Veri Yazma
 app.post('/api/tahliller', authMiddleware, async (req, res) => {
     try {
         let sha = "";
@@ -48,7 +49,7 @@ app.post('/api/tahliller', authMiddleware, async (req, res) => {
         
         const resGet = await fetch(url, {
             headers: { 
-                'Authorization': `token ${GITHUB_TOKEN}`, 
+                'Authorization': `Bearer ${GITHUB_TOKEN}`, 
                 'User-Agent': 'TahlilApp',
                 'Accept': 'application/vnd.github.v3+json'
             }
@@ -65,13 +66,13 @@ app.post('/api/tahliller', authMiddleware, async (req, res) => {
         const resPut = await fetch(url, {
             method: 'PUT',
             headers: { 
-                'Authorization': `token ${GITHUB_TOKEN}`, 
+                'Authorization': `Bearer ${GITHUB_TOKEN}`, 
                 'Content-Type': 'application/json', 
                 'User-Agent': 'TahlilApp',
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
-                message: "Tahlil sonuclari guncellendi (Zorunlu Bypass)",
+                message: "Tahlil sonuclari guncellendi (Kesin Bypass)",
                 content: yeniIcerikBase64,
                 sha: sha !== "" ? sha : undefined
             })
