@@ -55,12 +55,13 @@ function sifreSor() {
     }
 }
 
-// Sunucudan Verileri Çekme
+// Sunucudan Verileri Çekme (URL ve ByteString Korumalı)
 async function verileriGetir() {
     sifreSor();
     try {
-        const response = await fetch('/api/tahliller', {
-            headers: { 'x-auth-password': userPassword }
+        // encodeURI kullanarak tarayıcının ByteString hatası vermesini engelliyoruz
+        const response = await fetch(encodeURI('/api/tahliller'), {
+            headers: { 'x-auth-password': String(userPassword) }
         });
         if(response.status === 401) {
             alert("Şifre yanlış! Lütfen sayfayı yenileyip tekrar deneyin.");
@@ -75,13 +76,14 @@ async function verileriGetir() {
     }
 }
 
-// Sunucuya Verileri Gönderme (DÜZELTİLDİ: Hata artık yukarı fırlatılıyor)
+// Sunucuya Verileri Gönderme (URL ve ByteString Korumalı)
 async function verileriKaydet(tumVeriler) {
-    const response = await fetch('/api/tahliller', {
+    // encodeURI ile sarmalayarak tarayıcı kilitlenmesini önlüyoruz
+    const response = await fetch(encodeURI('/api/tahliller'), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'x-auth-password': userPassword
+            'x-auth-password': String(userPassword)
         },
         body: JSON.stringify(tumVeriler)
     });
@@ -91,6 +93,7 @@ async function verileriKaydet(tumVeriler) {
         throw new Error(errData.error || `Sunucu hata kodu döndürdü: ${response.status}`);
     }
 }
+
 
 // Form Gönderildiğinde (DÜZELTİLDİ: Akış hataya göre kesiliyor)
 document.getElementById('tahlilForm').addEventListener('submit', async function(e) {
