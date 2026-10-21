@@ -37,32 +37,50 @@ app.get('/api/tahliller', authMiddleware, async (req, res) => {
     }
 });
 
-// GitHub'a Veri Yazma (Kalıcı Kayıt)
+// GitHub'a Veri Yazma (Kalıcı Kayıt - TÜRKÇE KARAKTER DÜZELTMELİ)
 app.post('/api/tahliller', authMiddleware, async (req, res) => {
     try {
-        // Önce mevcut dosyanın SHA kodunu (kimliğini) öğrenmemiz gerekiyor
         let sha = "";
         const resGet = await fetch(`https://github.com{GITHUB_USERNAME}/${GITHUB_REPO}/contents/tahliller.json`, {
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'User-Agent': 'TahlilApp' }
+            headers: { 
+                'Authorization': `token ${GITHUB_TOKEN}`, 
+                'User-Agent': 'TahlilApp',
+                'Accept': 'application/vnd.github.v3+json'
+            }
         });
+        
         if (resGet.status === 200) {
             const dataGet = await resGet.json();
             sha = dataGet.sha;
         }
 
-        const yeniIcerikBase64 = Buffer.from(JSON.stringify(req.body, null, 2)).toString('base64');
+        // DÜZELTME: Türkçe karakterlerin byte hatası vermesini önlemek için 'utf-8' zorunlu kılındı
+        const jsonString = JSON.stringify(req.body, null, 2);
+        const yeniIcerikBase64 = Buffer.from(jsonString, 'utf-8').toString('base64');
 
-        await fetch(`https://github.com{GITHUB_USERNAME}/${GITHUB_REPO}/contents/tahliller.json`, {
+        const resPut = await fetch(`https://github.com{GITHUB_USERNAME}/${GITHUB_REPO}/contents/tahliller.json`, {
             method: 'PUT',
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'TahlilApp' },
+            headers: { 
+                'Authorization': `token ${GITHUB_TOKEN}`, 
+                'Content-Type': 'application/json', 
+                'User-Agent': 'TahlilApp',
+                'Accept': 'application/vnd.github.v3+json'
+            },
             body: JSON.stringify({
                 message: "Tahlil sonuclari guncellendi",
                 content: yeniIcerikBase64,
                 sha: sha !== "" ? sha : undefined
             })
         });
+
+        if (!resPut.ok) {
+            const errData = await resPut.json().catch(() => ({}));
+            throw new Error(errData.message || `GitHub hata kodu: ${resPut.status}`);
+        }
+
         res.json({ success: true });
     } catch (err) {
+        console.error("Veri kaydetme hatası:", err);
         res.status(500).json({ error: err.message });
     }
 });
