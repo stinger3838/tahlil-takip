@@ -16,7 +16,9 @@ const GITHUB_REPO = "tahlil-takip";
 const GITHUB_FILE = "tahliller.json";   
 // ----------------------------------------------------
 
+// DOĞRU SATIR: (Ters bölü işaretleri tamamen kaldırıldı)
 const GITHUB_API_URL = `https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
+
 
 const authMiddleware = (req, res, next) => {
     if (req.headers['x-auth-password'] === GIZLI_SIFRE) {
