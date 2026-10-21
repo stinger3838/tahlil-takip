@@ -7,9 +7,7 @@ app.use(express.json());
 
 // --- BURALARI KENDİ BİLGİLERİNİZLE DOLDURUN ---
 const GIZLI_SIFRE = "123456"; 
-const GITHUB_USERNAME = "stinger3838"; // <-- Buraya kendi kullanıcı adınızı yazın
-const GITHUB_REPO = "tahlil-takip";               // <-- Buraya repo adınızı yazın
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;                  // <-- Buraya ghp_ ile başlayan tokenınızı yazın
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Tırnaksız olarak Render kasasından okuyacak
 // ----------------------------------------------
 
 const authMiddleware = (req, res, next) => {
@@ -20,11 +18,10 @@ const authMiddleware = (req, res, next) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'tahlil_takip.html')));
 app.get('/script.js', (req, res) => res.sendFile(path.join(__dirname, 'script.js')));
 
-// GitHub'dan Veri Çekme
+// GitHub'dan Veri Çekme (DÜZELTİLDİ: URL tamamen statik ve kırılmaz yapıldı)
 app.get('/api/tahliller', authMiddleware, async (req, res) => {
     try {
-        // DÜZELTİLDİ: ://github.com adres yapısı ve dolar (\$) işaretleri eklendi
-        const url = `https://://github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/tahliller.json`;
+        const url = "https://github.com";
         const response = await fetch(url, {
             headers: { 
                 'Authorization': `token ${GITHUB_TOKEN}`, 
@@ -43,11 +40,11 @@ app.get('/api/tahliller', authMiddleware, async (req, res) => {
     }
 });
 
-// GitHub'a Veri Yazma
+// GitHub'a Veri Yazma (DÜZELTİLDİ: URL tamamen statik ve kırılmaz yapıldı)
 app.post('/api/tahliller', authMiddleware, async (req, res) => {
     try {
         let sha = "";
-        const url = `https://://github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/tahliller.json`;
+        const url = "https://github.com";
         
         const resGet = await fetch(url, {
             headers: { 
@@ -74,14 +71,14 @@ app.post('/api/tahliller', authMiddleware, async (req, res) => {
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify({
-                message: "Tahlil sonuclari guncellendi",
+                message: "Tahlil sonuclari guncellendi (Zorunlu Bypass)",
                 content: yeniIcerikBase64,
                 sha: sha !== "" ? sha : undefined
             })
         });
 
         if (!resPut.ok) {
-            const errData = await resPut.ok ? {} : await resPut.json().catch(() => ({}));
+            const errData = await resPut.json().catch(() => ({}));
             throw new Error(errData.message || `Sunucu hata kodu: ${resPut.status}`);
         }
 
